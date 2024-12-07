@@ -1,0 +1,34 @@
+package test;
+
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import com.demo.page.BaseTest;
+
+public class GoogleSearchTest extends BaseTest {
+
+    @Test
+    public void testSearchGoogle() {
+        // Navigate to Google
+        driver.get("https://www.google.com");
+
+        // Find the search bar and enter the search term
+        WebElement searchBox = driver.findElement(By.name("q"));
+        searchBox.sendKeys("TV Automation Framework");
+        searchBox.submit();
+
+        // Wait for the results to load (could be more sophisticated)
+        try {
+            Thread.sleep(2000); // Simple wait, use WebDriverWait for better reliability
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // Validate the search results title
+        String pageTitle = driver.getTitle();
+        Assert.assertTrue(pageTitle.contains("TV Automation Framework"));
+    }
+}

@@ -1,0 +1,106 @@
+package com.demo.page;
+
+import com.aventstack.extentreports.ExtentReports;
+import com.aventstack.extentreports.ExtentTest;
+import com.aventstack.extentreports.reporter.ExtentHtmlReporter;
+import io.github.bonigarcia.wdm.WebDriverManager;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import javax.mail.*;
+import javax.mail.internet.*;
+
+public class GoogleSearchTest {
+
+    WebDriver driver;
+    ExtentReports extent;
+    ExtentTest test;
+
+    @BeforeClass
+    public void setup() {
+        // Setup WebDriver using WebDriverManager
+        WebDriverManager.chromedriver().setup();
+        driver = new ChromeDriver();
+
+        // Set up ExtentReports for reporting
+        ExtentHtmlReporter htmlReporter = new ExtentHtmlReporter(new File("extentReport.html"));
+        extent = new ExtentReports();
+        extent.attachReporter(htmlReporter);
+
+        // Start the test in Extent Report
+        test = extent.createTest("Google Search Test");
+    }
+
+    @Test
+    public void googleSearchTest() {
+        try {
+            // Open Google and search for "TV Automation Framework"
+            driver.get("https://www.google.com");
+            WebElement searchBox = driver.findElement(By.name("q"));
+            searchBox.sendKeys("TV Automation Framework");
+            searchBox.submit();
+
+            // Validate search result
+            WebElement result = driver.findElement(By.xpath("//h3[contains(text(),'TV Automation Framework')]"));
+            Assert.assertTrue(result.isDisplayed(), "Search result is not displayed correctly.");
+            test.pass("Search for 'TV Automation Framework' passed successfully.");
+
+        } catch (Exception e) {
+            test.fail("Test Failed: " + e.getMessage());
+            sendEmail("Test Failure Notification", "The Google Search Test failed. Please check the logs.");
+        }
+    }
+
+    // Reusable method to search Google
+    public void searchInGoogle(String query) {
+        WebElement searchBox = driver.findElement(By.name("q"));
+        searchBox.sendKeys(query);
+        searchBox.submit();
+    }
+
+    @AfterClass
+    public void tearDown() {
+        // Close the browser
+        driver.quit();
+        extent.flush();
+    }
+
+    // Send an email notification
+    public void sendEmail(String subject, String messageBody) {
+        final String username = "your-email@example.com"; // replace with your email
+        final String password = "your-email-password";   // replace with your email password
+
+        Properties properties = new Properties();
+        properties.put("mail.smtp.host", "smtp.example.com"); // use the SMTP server of your email provider
+        properties.put("mail.smtp.port", "587");
+        properties.put("mail.smtp.auth", "true");
+        properties.put("mail.smtp.starttls.enable", "true");
+
+        Session session = Session.getInstance(properties, new Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(username, password);
+            }
+        });
+
+        try {
+            MimeMessage message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(username));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse("recipient@example.com"));
+            message.setSubject(subject);
+            message.setText(messageBody);
+
+            Transport.send(message);
+            System.out.println("Email Sent Successfully");
+
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
